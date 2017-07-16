@@ -126,7 +126,7 @@ def save_score(filepath:str, game:int, score:int) -> bool:
             if game_scores[0][1] >= score:
                 return False
             for i, hs in enumerate(game_scores):
-                if score > hs[1]:
+                if score > hs[1] and i != len(game_scores)-1:
                     continue
                 game_scores = add_high_score(game_scores, score, i-1)
                 break
@@ -182,7 +182,6 @@ def print_score(filepath:str, game:int) -> None:
     else:
         print("Nessun punteggio è stato ancora registrato per questo gioco.")
     print("")
-
 
 
 class InputTimedOut(Exception):
