@@ -25,6 +25,7 @@ class UserChoices(enum.IntEnum):
     GAME_32_BITS = enum.auto() # starts from 1
     GAME_60_SEC = enum.auto()
     GAME_3_SEC = enum.auto()
+    GAME_HEXSUM = enum.auto()
     EXIT = enum.auto()
 
     @classmethod
@@ -49,7 +50,8 @@ HIGH_SCORES = os.path.join(APP_DIR, "highscores.txt")
 DEFAULT_HIGH_SCORES = {
     UserChoices.GAME_32_BITS.value: [],
     UserChoices.GAME_60_SEC.value: [],
-    UserChoices.GAME_3_SEC.value: []
+    UserChoices.GAME_3_SEC.value: [],
+    UserChoices.GAME_HEXSUM.value: []
 }
 
 parser = argparse.ArgumentParser()
@@ -105,6 +107,11 @@ def save_score(filepath:str, game:int, score:int) -> bool:
     with open(filepath, mode) as fh:
         try:
             all_scores = pickle.load(fh)
+            for k, v in DEFAULT_HIGH_SCORES.items():
+                try:
+                    all_scores[k]
+                except KeyError:
+                    all_scores[k] = v
         except EOFError:
             all_scores = DEFAULT_HIGH_SCORES
             print('using void dict')
@@ -275,6 +282,52 @@ def bin2hex() -> int:
         return 0
 
 
+def hexsum(difficulty:str) -> int:
+    if difficulty in ('novice', 'n'):
+        max_value = 15
+    elif difficulty in ('intermediate', 'i'):
+        max_value = 127
+    else:
+        max_value = 255
+    score = 0
+    errors = 0
+    wrong = False
+    while True:
+        try:
+            signal.alarm(10)
+            a = random.randint(0, max_value)
+            b = random.randint(0, max_value)
+            hexa, hexb = hex(a)[2:], hex(b)[2:]
+            result = a + b
+            hexresult = hex(result).casefold()
+            answer = input('{} + {} = '.format(hexa, hexb))
+            signal.alarm(0)
+            if "{}{}".format("0x" if not str(answer).startswith("0x") else "",
+                             str(answer).casefold().lstrip('0')) == hexresult:
+                print("Good!\n")
+                score += 1
+            else:
+                print("Wrong!")
+                wrong = True
+                raise InputTimedOut
+        except InputTimedOut:
+            if not wrong:
+                print("Time's passed.")
+            else:
+                wrong = False
+            errors += 1
+            if errors == 1:
+                print("First error.\n")
+            elif errors == 2:
+                print("Second error.\n")
+            elif errors == 3:
+                print("Third and last error allowed.\n")
+            if errors > 3:
+                break
+    print("\nGame over. You made {} points!".format(score))
+    return score
+
+
 def main():
     while True:
         os.system('cls' if sys.platform.startswith('win') else 'clear')
@@ -284,9 +337,11 @@ def main():
               "({}) 32 bits\n"
               "({}) 60 seconds\n"
               "({}) 3 seconds\n"
+              "({}) Hex sum\n"
               "({}) Exit".format(UserChoices.GAME_32_BITS,
                                  UserChoices.GAME_60_SEC,
                                  UserChoices.GAME_3_SEC,
+                                 UserChoices.GAME_HEXSUM,
                                  UserChoices.EXIT))
         choose = input(">>> ")
         # if choose not in (str(x) for x in range(1, UserChoices.max_value() + 1)):
@@ -305,6 +360,9 @@ def main():
                 input("Press enter to continue.\n")
             elif choose == UserChoices.GAME_3_SEC:
                 score = bin2hex3secs()
+                input("Press enter to continue.\n")
+            elif choose == UserChoices.GAME_HEXSUM:
+                score = hexsum(args.difficulty)
                 input("Press enter to continue.\n")
             elif choose == UserChoices.EXIT:
                 sys.exit(0)
