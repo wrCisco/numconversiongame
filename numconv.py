@@ -22,7 +22,7 @@ import pickle
 
 
 class UserChoices(enum.IntEnum):
-    GAME_32_BITS = enum.auto() # starts from 1
+    GAME_32_BITS = enum.auto()  # starts from 1
     GAME_60_SEC = enum.auto()
     GAME_3_SEC = enum.auto()
     GAME_HEXSUM = enum.auto()
@@ -298,11 +298,17 @@ def hexsum(difficulty:str) -> int:
             b = random.randint(0, max_value)
             hexa, hexb = hex(a)[2:], hex(b)[2:]
             result = a + b
-            hexresult = hex(result).casefold()
+            hexresult = hex(result).casefold()[2:]
             answer = input('{} + {} = '.format(hexa, hexb))
             signal.alarm(0)
-            if "{}{}".format("0x" if not str(answer).startswith("0x") else "",
-                             str(answer).casefold().lstrip('0')) == hexresult:
+            answer = answer.casefold()
+            if answer.startswith('0x'):
+                answer = answer[2:]
+            if answer != '0'*(len(answer) or 1):
+                answer = answer.lstrip('0')
+            else:
+                answer = '0'
+            if answer == hexresult:
                 print("Good!\n")
                 score += 1
             else:
