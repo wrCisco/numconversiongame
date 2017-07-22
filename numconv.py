@@ -26,6 +26,7 @@ class UserChoices(enum.IntEnum):
     GAME_60_SEC = enum.auto()
     GAME_3_SEC = enum.auto()
     GAME_HEXSUM = enum.auto()
+    GAME_HEXMUL = enum.auto()
     EXIT = enum.auto()
 
     @classmethod
@@ -51,7 +52,8 @@ DEFAULT_HIGH_SCORES = {
     UserChoices.GAME_32_BITS.value: [],
     UserChoices.GAME_60_SEC.value: [],
     UserChoices.GAME_3_SEC.value: [],
-    UserChoices.GAME_HEXSUM.value: []
+    UserChoices.GAME_HEXSUM.value: [],
+    UserChoices.GAME_HEXMUL.value: []
 }
 
 parser = argparse.ArgumentParser()
@@ -291,6 +293,7 @@ def hexsum(difficulty:str) -> int:
     score = 0
     errors = 0
     wrong = False
+
     while True:
         try:
             signal.alarm(10)
@@ -322,13 +325,69 @@ def hexsum(difficulty:str) -> int:
                 wrong = False
             errors += 1
             if errors == 1:
-                print("First error.\n")
+                print("First error.")
             elif errors == 2:
-                print("Second error.\n")
+                print("Second error.")
             elif errors == 3:
-                print("Third and last error allowed.\n")
+                print("Third and last error allowed.")
             if errors > 3:
                 break
+            input("Ready to next op?\n")
+    print("\nGame over. You made {} points!".format(score))
+    return score
+
+
+
+def hexmul(difficulty:str) -> int:
+    if difficulty in ('novice', 'n'):
+        max_value = 15
+    elif difficulty in ('intermediate', 'i'):
+        max_value = 127
+    else:
+        max_value = 255
+    score = 0
+    errors = 0
+    wrong = False
+
+    while True:
+        try:
+            signal.alarm(10)
+            a = random.randint(0, max_value)
+            b = random.randint(0, max_value)
+            hexa, hexb = hex(a)[2:], hex(b)[2:]
+            result = a * b
+            hexresult = hex(result).casefold()[2:]
+            answer = input('{} \u00D7 {} = '.format(hexa, hexb))
+            signal.alarm(0)
+            answer = answer.casefold()
+            if answer.startswith('0x'):
+                answer = answer[2:]
+            if answer != '0'*(len(answer) or 1):
+                answer = answer.lstrip('0')
+            else:
+                answer = '0'
+            if answer == hexresult:
+                print("Good!\n")
+                score += 1
+            else:
+                print("Wrong!")
+                wrong = True
+                raise InputTimedOut
+        except InputTimedOut:
+            if not wrong:
+                print("Time's passed.")
+            else:
+                wrong = False
+            errors += 1
+            if errors == 1:
+                print("First error.")
+            elif errors == 2:
+                print("Second error.")
+            elif errors == 3:
+                print("Third and last error allowed.")
+            if errors > 3:
+                break
+            input("Ready to next op?\n")
     print("\nGame over. You made {} points!".format(score))
     return score
 
@@ -343,10 +402,12 @@ def main():
               "({}) 60 seconds\n"
               "({}) 3 seconds\n"
               "({}) Hex sum\n"
+              "({}) Hex mul\n"
               "({}) Exit".format(UserChoices.GAME_32_BITS,
                                  UserChoices.GAME_60_SEC,
                                  UserChoices.GAME_3_SEC,
                                  UserChoices.GAME_HEXSUM,
+                                 UserChoices.GAME_HEXMUL,
                                  UserChoices.EXIT))
         choose = input(">>> ")
         # if choose not in (str(x) for x in range(1, UserChoices.max_value() + 1)):
@@ -368,6 +429,9 @@ def main():
                 input("Press enter to continue.\n")
             elif choose == UserChoices.GAME_HEXSUM:
                 score = hexsum(args.difficulty)
+                input("Press enter to continue.\n")
+            elif choose == UserChoices.GAME_HEXMUL:
+                score = hexmul(args.difficulty)
                 input("Press enter to continue.\n")
             elif choose == UserChoices.EXIT:
                 sys.exit(0)
