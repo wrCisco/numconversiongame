@@ -143,3 +143,5 @@ ENV/
 
 # file created and updated by app
 highscores.txt
+
+numconv_old.py

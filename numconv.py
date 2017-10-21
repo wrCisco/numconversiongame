@@ -1,44 +1,74 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# Unix systems only
 
 __author__ = "Francesco Martini"
 __version__ = "0.0.1"
 
 
-import random
-import threading
-import signal
-import argparse
 import sys
 import os
-import time
-#import shutil
-from functools import wraps
-from datetime import datetime
-import enum
 import pickle
+from datetime import datetime
+
+from .games import games
+from .games.games import Game
 
 
-class UserChoices(enum.IntEnum):
-    GAME_32_BITS = enum.auto()  # starts from 1
-    GAME_60_SEC = enum.auto()
-    GAME_3_SEC = enum.auto()
-    GAME_HEXSUM = enum.auto()
-    GAME_HEXMUL = enum.auto()
-    EXIT = enum.auto()
-
-    @classmethod
-    def max_value(cls):
-        num = ''
-        for member in cls:
-            if num == '':
-                num = member.value
-            else:
-                num = max((num, member.value))
-        return num
-
+GAMES = [
+    Game(
+        name='game_3_sec',
+        repr_name='Bin2hex (3 seconds)',
+        start_func=games.bin2hex3secs,
+        setup_func=lambda: games.set_max_value((15, 255, 65535)),
+        description="Convert the binary numbers in their hexadecimal "
+                    "equivalents.\n"
+                    "You'll have three seconds for every number.\n"
+                    "Three errors allowed."
+    ),
+    Game(
+        name='game_hexsum',
+        repr_name='Hex sum',
+        start_func=games.hexsum,
+        setup_func=games.set_max_value
+    ),
+    Game(
+        name='game_hexmul',
+        repr_name='Hex mul',
+        start_func=games.hexmul,
+        setup_func=games.set_max_value
+    ),
+    Game(
+        name='game_hexdiff',
+        repr_name='Hex diff',
+        start_func=games.hexdiff,
+        setup_func=games.set_max_value
+    ),
+    Game(
+        name='game_arithm',
+        repr_name='Hex arithmetic',
+        start_func=games.hex_random_arithm,
+        setup_func=games.set_max_value
+    ),
+    Game(
+        name='game_dec_6_sec',
+        repr_name='Hex2dec (6 seconds)',
+        start_func=games.hex2dec,
+        setup_func=games.set_max_value
+    ),
+    Game(
+        name='game_hex_6_sec',
+        repr_name='Dec2hex (6 seconds)',
+        start_func=games.dec2hex,
+        setup_func=games.set_max_value
+    ),
+    Game(
+        name='recognize_code_point_word',
+        repr_name='Recognize code points',
+        start_func=games.recognize_code_point_word,
+        setup_func=games.rec_code_point_word_setup
+    )
+]
 
 if getattr(sys, "frozen", False):
     APP_DIR = os.path.dirname(sys.executable)
@@ -47,49 +77,12 @@ else:
 
 HIGH_SCORES = os.path.join(APP_DIR, "highscores.txt")
 
-
-DEFAULT_HIGH_SCORES = {
-    UserChoices.GAME_32_BITS.value: [],
-    UserChoices.GAME_60_SEC.value: [],
-    UserChoices.GAME_3_SEC.value: [],
-    UserChoices.GAME_HEXSUM.value: [],
-    UserChoices.GAME_HEXMUL.value: []
-}
-
-parser = argparse.ArgumentParser()
-
-parser.add_argument(
-    '-d',
-    '--difficulty',
-    choices=('novice', 'intermediate', 'expert', 'n', 'i', 'e'),
-    default='intermediate'
-)
-
-args = parser.parse_args()
-
-if args.difficulty in ('novice', 'n'):
-    secs_for_answer = 14
-elif args.difficulty in ('intermediate', 'i'):
-    secs_for_answer = 10
-else:
-    secs_for_answer = 6
+DEFAULT_HIGH_SCORES = {}
+for game_ in GAMES:
+    DEFAULT_HIGH_SCORES[game_.name] = []
 
 
-# Function not used
-def delay(delay=0.):
-    """
-    Decorator delaying the execution of a function for a while.
-    """
-    def wrap(f):
-        @wraps(f)
-        def delayed(*args, **kwargs):
-            timer = threading.Timer(delay, f, args=args, kwargs=kwargs)
-            timer.start()
-        return delayed
-    return wrap
-
-
-def add_high_score(scores:list, user_score:int, pos:int) -> list:
+def add_high_score(scores: list, user_score: int, pos: int) -> list:
     print("Congratulations! You are in the top ten!")
     name = input("Enter your name: ")
     if len(scores) >= 10:
@@ -97,11 +90,12 @@ def add_high_score(scores:list, user_score:int, pos:int) -> list:
             scores.pop(0)
         except IndexError:
             pass
-    scores.insert(pos, (name, user_score, datetime.strftime(datetime.now(), "%d-%m-%Y %H.%M")))
+    scores.insert(pos, (name, user_score, datetime.strftime(datetime.now(),
+                                                            "%d-%m-%Y %H.%M")))
     return scores
 
 
-def save_score(filepath:str, game:int, score:int) -> bool:
+def save_score(filepath: str, game: str, score: int) -> bool:
     if not os.path.isfile(filepath):
         mode = 'wb'
     else:
@@ -123,7 +117,6 @@ def save_score(filepath:str, game:int, score:int) -> bool:
             game_scores = []
         if len(game_scores) < 10:
             game_scores = add_high_score(game_scores, score, 0)
-            # name = input("Enter your name: ")
         else:
             if game_scores[0][1] >= score:
                 return False
@@ -138,7 +131,7 @@ def save_score(filepath:str, game:int, score:int) -> bool:
     return True
 
 
-def get_max_lengths(scores:list) -> tuple:
+def get_max_lengths(scores: list) -> tuple:
     max_len_names = 0
     max_len_scores = 0
     max_len_dates = 0
@@ -152,14 +145,14 @@ def get_max_lengths(scores:list) -> tuple:
     return max_len_names, max_len_scores, max_len_dates
 
 
-def print_score(filepath:str, game:int) -> None:
+def print_score(filepath: str, game: Game) -> None:
     with open(filepath, 'rb') as fh:
         try:
             all_scores = pickle.load(fh)
         except EOFError:
             all_scores = DEFAULT_HIGH_SCORES
     try:
-        game_scores = sorted(all_scores[game], key=lambda x: x[1], reverse=True)
+        game_scores = sorted(all_scores[game.name], key=lambda x: x[1], reverse=True)
     except IndexError:
         game_scores = []
     len_names, len_scores, len_dates = get_max_lengths(game_scores)
@@ -186,260 +179,26 @@ def print_score(filepath:str, game:int) -> None:
     print("")
 
 
-class InputTimedOut(Exception):
-    pass
-
-
-def raise_InputTimedOut(signum, frame):
-    raise InputTimedOut
-
-
-signal.signal(signal.SIGALRM, raise_InputTimedOut)
-
-
-def bin2hex3secs() -> int:
-    score = 0
-    errors = 0
-    wrong = False
-    while True:
-        time.sleep(0.1)
-        try:
-            signal.alarm(3)
-            a = bin(random.randint(1, 15))
-            pres_a = a[2:].rjust(4, '0')
-            print(pres_a)
-            b = input("What is the correspondent hex? ")
-            signal.alarm(0)
-            hexa = hex(int(a, base=2))
-            if "{}{}".format("0x" if not str(b).startswith("0x") else "",
-                             str(b).casefold().lstrip('0')) == hexa.casefold():
-                score += 1
-                print("Good!\n")
-            else:
-                print("Wrong!")
-                wrong = True
-                raise InputTimedOut
-        except InputTimedOut:
-            if not wrong:
-                print("\nTime's over.")
-                signal.alarm(0)
-            else:
-                wrong = False
-            errors += 1
-            if errors == 1:
-                print("First error.\n")
-            elif errors == 2:
-                print("Second error.\n")
-            elif errors == 3:
-                print("Third and last error allowed.\n")
-            if errors > 3:
-                break
-    print("\nGame over. You made {} points!".format(score))
-    return score
-
-
-def bin2hex60secs() -> int:
-    score = 0
-    try:
-        signal.alarm(60)
-        while True:
-            a = bin(random.randint(1, 15))
-            pres_a = a[2:].rjust(4, '0')
-            print(pres_a)
-            b = input("What is the correspondent hex? ")
-            hexa = hex(int(a, base=2))
-            if "{}{}".format("0x" if not str(b).startswith("0x") else "",
-                             str(b).casefold().lstrip('0')) == hexa.casefold():
-                score += 1
-                print("Good!\n")
-            else:
-                print("Wrong!\n")
-            time.sleep(0.1)
-    except InputTimedOut:
-        print("\nTime's over. You made {} points!".format(score))
-    return score
-
-
-def bin2hex() -> int:
-    a = bin(random.randint(1, 65535))
-    pres_a = a[2:].rjust(16, '0')
-    for c in range(len(pres_a), 0, -4):
-        pres_a = pres_a[:c]+' '+pres_a[c:]
-    print(pres_a)
-    try:
-        signal.alarm(secs_for_answer)
-        b = input("What is the correspondent hex? ")
-        signal.alarm(0)
-    except InputTimedOut:
-        print("\nTime passed, move on.\n")
-        return 0
-    hexa = hex(int(a, base=2))
-    if "{}{}".format("0x" if not str(b).startswith("0x") else "",
-                     str(b).casefold().lstrip('0')) == hexa.casefold():
-        print("Good!\n")
-        return 1
-    else:
-        print("Booh!\n")
-        return 0
-
-
-def hexsum(difficulty:str) -> int:
-    if difficulty in ('novice', 'n'):
-        max_value = 15
-    elif difficulty in ('intermediate', 'i'):
-        max_value = 127
-    else:
-        max_value = 255
-    score = 0
-    errors = 0
-    wrong = False
-
-    while True:
-        try:
-            signal.alarm(10)
-            a = random.randint(0, max_value)
-            b = random.randint(0, max_value)
-            hexa, hexb = hex(a)[2:], hex(b)[2:]
-            result = a + b
-            hexresult = hex(result).casefold()[2:]
-            answer = input('{} + {} = '.format(hexa, hexb))
-            signal.alarm(0)
-            answer = answer.casefold()
-            if answer.startswith('0x'):
-                answer = answer[2:]
-            if answer != '0'*(len(answer) or 1):
-                answer = answer.lstrip('0')
-            else:
-                answer = '0'
-            if answer == hexresult:
-                print("Good!\n")
-                score += 1
-            else:
-                print("Wrong!")
-                wrong = True
-                raise InputTimedOut
-        except InputTimedOut:
-            if not wrong:
-                print("Time's passed.")
-            else:
-                wrong = False
-            errors += 1
-            if errors == 1:
-                print("First error.")
-            elif errors == 2:
-                print("Second error.")
-            elif errors == 3:
-                print("Third and last error allowed.")
-            if errors > 3:
-                break
-            input("Ready to next op?\n")
-    print("\nGame over. You made {} points!".format(score))
-    return score
-
-
-
-def hexmul(difficulty:str) -> int:
-    if difficulty in ('novice', 'n'):
-        max_value = 15
-    elif difficulty in ('intermediate', 'i'):
-        max_value = 127
-    else:
-        max_value = 255
-    score = 0
-    errors = 0
-    wrong = False
-
-    while True:
-        try:
-            signal.alarm(10)
-            a = random.randint(0, max_value)
-            b = random.randint(0, max_value)
-            hexa, hexb = hex(a)[2:], hex(b)[2:]
-            result = a * b
-            hexresult = hex(result).casefold()[2:]
-            answer = input('{} \u00D7 {} = '.format(hexa, hexb))
-            signal.alarm(0)
-            answer = answer.casefold()
-            if answer.startswith('0x'):
-                answer = answer[2:]
-            if answer != '0'*(len(answer) or 1):
-                answer = answer.lstrip('0')
-            else:
-                answer = '0'
-            if answer == hexresult:
-                print("Good!\n")
-                score += 1
-            else:
-                print("Wrong!")
-                wrong = True
-                raise InputTimedOut
-        except InputTimedOut:
-            if not wrong:
-                print("Time's passed.")
-            else:
-                wrong = False
-            errors += 1
-            if errors == 1:
-                print("First error.")
-            elif errors == 2:
-                print("Second error.")
-            elif errors == 3:
-                print("Third and last error allowed.")
-            if errors > 3:
-                break
-            input("Ready to next op?\n")
-    print("\nGame over. You made {} points!".format(score))
-    return score
-
-
 def main():
     while True:
         os.system('cls' if sys.platform.startswith('win') else 'clear')
-        # print('\n'*shutil.get_terminal_size()[1])
         print("Welcome to the bin2hex challenge!\n"
-              "What game do you want to play?\n"
-              "({}) 32 bits\n"
-              "({}) 60 seconds\n"
-              "({}) 3 seconds\n"
-              "({}) Hex sum\n"
-              "({}) Hex mul\n"
-              "({}) Exit".format(UserChoices.GAME_32_BITS,
-                                 UserChoices.GAME_60_SEC,
-                                 UserChoices.GAME_3_SEC,
-                                 UserChoices.GAME_HEXSUM,
-                                 UserChoices.GAME_HEXMUL,
-                                 UserChoices.EXIT))
+              "What game do you want to play?")
+        for i, game in enumerate(GAMES, 1):
+            print("({}) {}".format(i, game))
+        print("({}) Exit".format(len(GAMES)+1))
         choose = input(">>> ")
-        # if choose not in (str(x) for x in range(1, UserChoices.max_value() + 1)):
-        #    continue
         try:
             choose = int(choose)
-            if choose == UserChoices.GAME_32_BITS:
-                score = 0
-                for x in range(1, 6):
-                    score += bin2hex()
-                    print("Score: {} on {}.\n".format(score, x))
-                    # needed to consume optional user input remained in stdin if the last round was 'TimedOut'
-                    # input()
-            elif choose == UserChoices.GAME_60_SEC:
-                score = bin2hex60secs()
-                input("Press enter to continue.\n")
-            elif choose == UserChoices.GAME_3_SEC:
-                score = bin2hex3secs()
-                input("Press enter to continue.\n")
-            elif choose == UserChoices.GAME_HEXSUM:
-                score = hexsum(args.difficulty)
-                input("Press enter to continue.\n")
-            elif choose == UserChoices.GAME_HEXMUL:
-                score = hexmul(args.difficulty)
-                input("Press enter to continue.\n")
-            elif choose == UserChoices.EXIT:
+            if choose == len(GAMES) + 1:
                 sys.exit(0)
-            else:
-                continue
-            save_score(HIGH_SCORES, choose, score)
-            print_score(HIGH_SCORES, choose)
-            input()
+            for game in GAMES:
+                if choose == GAMES.index(game) + 1:
+                    score = game.game_loop()
+                    save_score(HIGH_SCORES, game.name, score)
+                    print_score(HIGH_SCORES, game)
+                    input()
+                    break
         except ValueError:
             pass
 
