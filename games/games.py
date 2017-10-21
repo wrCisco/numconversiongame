@@ -5,21 +5,16 @@
 import random
 import sys
 import os
+from abc import ABCMeta, abstractmethod
 from typing import Callable
 
 import utils
 from utils import InputTimedOut
 
 
-class Game(object):
+class Game(metaclass=ABCMeta):
 
-    def __init__(self,
-                 name: str,
-                 repr_name: str,
-                 start_func: Callable = lambda: None,
-                 setup_func: Callable = lambda: None,
-                 description: str = '',
-                 **kwargs) -> None:
+    def __init__(self, name: str, repr_name: str, *args, **kwargs) -> None:
         """
         :param name: a string. It's a human readable id,
                and should never change (it's used for saving
@@ -39,18 +34,24 @@ class Game(object):
                (if these options are not present, it uses default values).
         :param description: optional description of the game.
         """
-        super().__init__(**kwargs)
-        self.name = name
+        super().__init__(*args, **kwargs)
+        self.name_id = name
         self.repr_name = repr_name
-        self.run = start_func
-        self.setup = setup_func
-        self.description = description
+        self.description = ''
 
     def __str__(self) -> str:
         return self.repr_name
 
     def __repr__(self) -> str:
         return self.repr_name
+
+    @abstractmethod
+    def run(self, *args, **kwargs):
+        pass
+
+    @abstractmethod
+    def setup(self):
+        pass
 
     def game_loop(self) -> int:
         """
@@ -114,26 +115,39 @@ def set_max_value(values: tuple = (15, 127, 255)) -> dict:
     return {'max_value': values[set_difficulty() - 1]}
 
 
+class Bin2Hex3Secs(Game):
 
-def bin2hex3secs(opts: dict) -> int:
-    a = random.randint(1, opts['max_value'])
-    digits = 0
-    a_ = a
-    while a_ > 0:
-        a_ //= 2
-        digits += 1
-    digits += 4 - (digits % 4 or 4)
-    pres_a = bin(a)[2:].rjust(digits, '0')
-    for _ in range(len(pres_a), 0, -4):
-        pres_a = pres_a[:_]+' '+pres_a[_:]
-    print(pres_a)
-    b = utils.read_input("What is the correspondent hex? ", 3)
-    hex_a = hex(a)
-    if "{}{}".format("0x" if not str(b).startswith("0x") else "",
-                     str(b).casefold().lstrip('0')) == hex_a.casefold():
-        return True
-    else:
-        return False
+    def __init__(self, *args, **kwargs) -> None:
+        self.name_id = 'game_3_sec'
+        self.name = 'Bin2hex (3 seconds)'
+        self.description = "Convert the binary numbers in their hexadecimal " \
+                           "equivalents.\n" \
+                           "You'll have three seconds for every number.\n" \
+                           "Three errors allowed."
+        super().__init__(self.name_id, self.repr_name, *args, **kwargs)
+
+    def run(self, opts: dict) -> int:
+        a = random.randint(1, opts['max_value'])
+        digits = 0
+        a_ = a
+        while a_ > 0:
+            a_ //= 2
+            digits += 1
+        digits += 4 - (digits % 4 or 4)
+        pres_a = bin(a)[2:].rjust(digits, '0')
+        for _ in range(len(pres_a), 0, -4):
+            pres_a = pres_a[:_] + ' ' + pres_a[_:]
+        print(pres_a)
+        b = utils.read_input("What is the correspondent hex? ", 3)
+        hex_a = hex(a)
+        if "{}{}".format("0x" if not str(b).startswith("0x") else "",
+                         str(b).casefold().lstrip('0')) == hex_a.casefold():
+            return True
+        else:
+            return False
+
+    def setup(self) -> dict:
+        return set_max_value(values=(15, 255,   65535))
 
 
 def hexsum(opts: dict) -> bool:
@@ -265,4 +279,3 @@ def recognize_code_point_word(opts: dict) -> bool:
         return True
     else:
         return False
-        
