@@ -114,7 +114,6 @@ def set_max_value(values: tuple = (15, 127, 255)) -> dict:
     return {'max_value': values[set_difficulty() - 1]}
 
 
-
 def bin2hex3secs(opts: dict) -> int:
     a = random.randint(1, opts['max_value'])
     digits = 0
@@ -265,4 +264,3 @@ def recognize_code_point_word(opts: dict) -> bool:
         return True
     else:
         return False
-        

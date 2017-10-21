@@ -11,8 +11,8 @@ import os
 import pickle
 from datetime import datetime
 
-from .games import games
-from .games.games import Game
+from games import games
+from games.games import Game
 
 
 GAMES = [
@@ -21,7 +21,7 @@ GAMES = [
         repr_name='Bin2hex (3 seconds)',
         start_func=games.bin2hex3secs,
         setup_func=lambda: games.set_max_value((15, 255, 65535)),
-        description="Convert the binary numbers in their hexadecimal "
+        description="Convert binary numbers to their hexadecimal "
                     "equivalents.\n"
                     "You'll have three seconds for every number.\n"
                     "Three errors allowed."
@@ -30,43 +30,78 @@ GAMES = [
         name='game_hexsum',
         repr_name='Hex sum',
         start_func=games.hexsum,
-        setup_func=games.set_max_value
+        setup_func=games.set_max_value,
+        description="Calculate the sum of the two hexadecimal numbers.\n"
+                    "Novice: numbers up to F; intermediate: numbers up to 7F; "
+                    "expert: numbers up to FF.\n"
+                    "You'll have ten seconds for every operation.\n"
+                    "Three errors allowed."
     ),
     Game(
         name='game_hexmul',
         repr_name='Hex mul',
         start_func=games.hexmul,
-        setup_func=games.set_max_value
+        setup_func=games.set_max_value,
+        description="Calculate the product of the two hexadecimal numbers.\n"
+                    "Novice: numbers up to F; intermediate: numbers up to 7F; "
+                    "expert: numbers up to FF.\n"
+                    "You'll have ten seconds for every operation.\n"
+                    "Three errors allowed."
     ),
     Game(
         name='game_hexdiff',
         repr_name='Hex diff',
         start_func=games.hexdiff,
-        setup_func=games.set_max_value
+        setup_func=games.set_max_value,
+        description="Calculate the difference of the two hexadecimal numbers.\n"
+                    "Novice: numbers up to F; intermediate: numbers up to 7F; "
+                    "expert: numbers up to FF.\n"
+                    "You'll have ten seconds for every operation.\n"
+                    "Three errors allowed."
     ),
     Game(
         name='game_arithm',
         repr_name='Hex arithmetic',
         start_func=games.hex_random_arithm,
-        setup_func=games.set_max_value
+        setup_func=games.set_max_value,
+        description="Calculate the result of the arithmetic operation between "
+                    "two hexadecimal numbers.\n"
+                    "Novice: numbers up to F; intermediate: numbers up to 7F; "
+                    "expert: numbers up to FF.\n"
+                    "You'll have ten seconds for every operation.\n"
+                    "Three errors allowed."
     ),
     Game(
         name='game_dec_6_sec',
         repr_name='Hex2dec (6 seconds)',
         start_func=games.hex2dec,
-        setup_func=games.set_max_value
+        setup_func=games.set_max_value,
+        description="Convert the hexadecimal numbers to decimal notation.\n"
+                    "Novice: numbers up to F; intermediate: numbers up to 7F; "
+                    "expert: numbers up to FF.\n"
+                    "You'll have six seconds for every number.\n"
+                    "Three errors allowed."
     ),
     Game(
         name='game_hex_6_sec',
         repr_name='Dec2hex (6 seconds)',
         start_func=games.dec2hex,
-        setup_func=games.set_max_value
+        setup_func=games.set_max_value,
+        description="Convert the decimal numbers to hexadecimal notation.\n"
+                    "Novice: numbers up to F; intermediate: numbers up to 7F; "
+                    "expert: numbers up to FF.\n"
+                    "You'll have six seconds for every number.\n"
+                    "Three errors allowed."
     ),
     Game(
         name='recognize_code_point_word',
         repr_name='Recognize code points',
         start_func=games.recognize_code_point_word,
-        setup_func=games.rec_code_point_word_setup
+        setup_func=games.rec_code_point_word_setup,
+        description="Decode words written as a sequence of hexadecimal numbers "
+                    "to their correspondent sequence of unicode characters.\n"
+                    "Novice: you'll have twenty seconds for every word; intermediate: fifteen seconds; "
+                    "expert: ten seconds."
     )
 ]
 
