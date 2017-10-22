@@ -54,9 +54,9 @@ class Game(metaclass=ABCMeta):
 
     setup:     instance method. Returns the dictionary of options that will be
                passed to the run method. The standard implementation provides
-               the user with a choice amongst three levels of difficulty
-               (novice, intermediate and expert), that will set the value
-               for the 'max_value' key in the opts dictionary.
+               the user with a choice amongst four levels of difficulty
+               (novice, intermediate, expert and master), that will set
+               the value for the 'max_value' key in the opts dictionary.
                The method set_difficulty, called during the execution of setup,
                also sets the optional attribute self.difficulty (a string) that
                will be used when saving high scores.
