@@ -226,9 +226,13 @@ class HexArithm(Game):
             self.operation = operation
         else:
             self.operation = (
-                ('+', operator.add),
-                ('-', operator.sub),
-                ('\u00d7', operator.mul)
+                 {'glyph': '+',
+                  'operator': operator.add},
+                 {'glyph': '-',
+                  'operator': operator.sub},
+                 {'glyph': '\u00d7',
+                  'operator': operator.mul,
+                  'difficulty_coefficient': 0x10}
             )
 
     def setup(self):
@@ -239,14 +243,19 @@ class HexArithm(Game):
     def run(self, opts: dict) -> bool:
         a = random.randint(0, opts['max_value'])
         b = random.randint(0, opts['max_value'])
+
         operator_index = random.randint(0, len(opts['operation'])-1)
-        arithmetic_operator = opts['operation'][operator_index][1]
+        arithmetic_operator = opts['operation'][operator_index]['operator']
+        coefficient = opts['operation'][operator_index].get('difficulty_coefficient', 1)
+        a //= coefficient
+        b //= coefficient
+
         hexa, hexb = hex(a)[2:], hex(b)[2:]
         result = arithmetic_operator(a, b)
         sign = '-' if result < 0 else ''
         hexresult = sign + hex(abs(result)).lower()[2:]
         answer = utils.read_input('{} {} {} = '.format(
-                hexa, opts['operation'][operator_index][0], hexb), 10)
+                hexa, opts['operation'][operator_index]['glyph'], hexb), 10)
         answer = answer.lower()
         if re.fullmatch(r'-?(?:0x)?0+', answer):
             # if answer means 0, let be only '0'
@@ -266,7 +275,7 @@ class HexSum(HexArithm):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Hex sum'
-        self.operation = (('+', operator.add),)
+        self.operation = ({'glyph': '+', 'operator': operator.add},)
         super().__init__(self.name_id, self.name, self.operation, *args, **kwargs)
         self.description = "Calculate the sum of the two hexadecimal numbers.\n" \
                            "You'll have ten seconds for every operation.\n" + \
@@ -278,7 +287,7 @@ class HexMul(HexArithm):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Hex mul'
-        self.operation = (('\u00d7', operator.mul),)
+        self.operation = ({'glyph': '\u00d7', 'operator': operator.mul},)
         super().__init__(self.name_id, self.name, self.operation, *args, **kwargs)
         self.description = "Calculate the product of the two hexadecimal numbers.\n" \
                            "You'll have ten seconds for every operation.\n" + \
@@ -290,7 +299,7 @@ class HexDiff(HexArithm):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Hex diff'
-        self.operation = (('-', operator.sub),)
+        self.operation = ({'glyph': '-', 'operator': operator.sub},)
         super().__init__(self.name_id, self.name, self.operation, *args, **kwargs)
         self.description = "Calculate the difference of the two hexadecimal numbers.\n" \
                            "You'll have ten seconds for every operation.\n" + \
