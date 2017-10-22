@@ -92,6 +92,11 @@ class Game(metaclass=ABCMeta):
         self.name = name
         self.difficulty = ''
 
+        # snippet that can be added to self.description in case standard setup method is used.
+        self.standard_description = "Three errors allowed.\n\n" \
+                                    "Novice: numbers up to F.\nIntermediate: numbers up to 7F.\n" \
+                                    "Expert: numbers up to FF.\nMaster: numbers up to FFF.\n"
+
     def __str__(self) -> str:
         return self.name
 
@@ -105,10 +110,11 @@ class Game(metaclass=ABCMeta):
     def setup(self) -> dict:
         return self.set_max_value()
 
-    def set_max_value(self, values: tuple = (15, 127, 255)) -> dict:
+    def set_max_value(self, values: tuple = (15, 127, 255, 4095)) -> dict:
         return {'max_value': values[self.set_difficulty() - 1]}
 
-    def set_difficulty(self, levels: tuple = ('Novice', 'Intermediate', 'Expert')) -> int:
+    def set_difficulty(self, levels: tuple = ('Novice', 'Intermediate',
+                                              'Expert', 'Master')) -> int:
         user_input = ''
         prompt = 'Set difficulty:\n'
         for i, level in enumerate(levels, start=1):
@@ -175,11 +181,11 @@ class Bin2Hex3Secs(Game):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id  # 'game_3_sec'
         self.name = 'Bin2hex (3 seconds)'
+        super().__init__(self.name_id, self.name, *args, **kwargs)
         self.description = "Convert binary numbers to their hexadecimal " \
                            "equivalents.\n" \
                            "You'll have three seconds for every number.\n" \
                            "Three errors allowed."
-        super().__init__(self.name_id, self.name, *args, **kwargs)
 
     def setup(self) -> dict:
         return self.set_max_value(values=(15, 255, 65535))
@@ -211,12 +217,11 @@ class HexArithm(Game):
                  operation: tuple = (), *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = name
+        super().__init__(name_id, name, *args, **kwargs)
         self.description = "Calculate the result of the arithmetic operation between " \
                            "two hexadecimal numbers.\n" \
-                           "Novice: numbers up to F; intermediate: numbers up to 7F; " \
-                           "expert: numbers up to FF.\n" \
-                           "You'll have ten seconds for every operation.\n" \
-                           "Three errors allowed."
+                           "You'll have ten seconds for every operation.\n" + \
+                           self.standard_description
         if operation:
             self.operation = operation
         else:
@@ -225,7 +230,6 @@ class HexArithm(Game):
                 ('-', operator.sub),
                 ('\u00d7', operator.mul)
             )
-        super().__init__(name_id, name, *args, **kwargs)
 
     def setup(self):
         opts = self.set_max_value()
@@ -235,9 +239,9 @@ class HexArithm(Game):
     def run(self, opts: dict) -> bool:
         a = random.randint(0, opts['max_value'])
         b = random.randint(0, opts['max_value'])
-        hexa, hexb = hex(a)[2:], hex(b)[2:]
         operator_index = random.randint(0, len(opts['operation'])-1)
         arithmetic_operator = opts['operation'][operator_index][1]
+        hexa, hexb = hex(a)[2:], hex(b)[2:]
         result = arithmetic_operator(a, b)
         sign = '-' if result < 0 else ''
         hexresult = sign + hex(abs(result)).lower()[2:]
@@ -262,13 +266,11 @@ class HexSum(HexArithm):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Hex sum'
-        self.description = "Calculate the sum of the two hexadecimal numbers.\n" \
-                           "Novice: numbers up to F; intermediate: numbers up to 7F; " \
-                           "expert: numbers up to FF.\n" \
-                           "You'll have ten seconds for every operation.\n" \
-                           "Three errors allowed."
         self.operation = (('+', operator.add),)
         super().__init__(self.name_id, self.name, self.operation, *args, **kwargs)
+        self.description = "Calculate the sum of the two hexadecimal numbers.\n" \
+                           "You'll have ten seconds for every operation.\n" + \
+                           self.standard_description
 
 
 class HexMul(HexArithm):
@@ -276,13 +278,11 @@ class HexMul(HexArithm):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Hex mul'
-        self.description = "Calculate the product of the two hexadecimal numbers.\n" \
-                           "Novice: numbers up to F; intermediate: numbers up to 7F; " \
-                           "expert: numbers up to FF.\n" \
-                           "You'll have ten seconds for every operation.\n" \
-                           "Three errors allowed."
         self.operation = (('\u00d7', operator.mul),)
         super().__init__(self.name_id, self.name, self.operation, *args, **kwargs)
+        self.description = "Calculate the product of the two hexadecimal numbers.\n" \
+                           "You'll have ten seconds for every operation.\n" + \
+                           self.standard_description
 
 
 class HexDiff(HexArithm):
@@ -290,13 +290,11 @@ class HexDiff(HexArithm):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Hex diff'
-        self.description = "Calculate the difference of the two hexadecimal numbers.\n" \
-                           "Novice: numbers up to F; intermediate: numbers up to 7F; " \
-                           "expert: numbers up to FF.\n" \
-                           "You'll have ten seconds for every operation.\n" \
-                           "Three errors allowed."
         self.operation = (('-', operator.sub),)
         super().__init__(self.name_id, self.name, self.operation, *args, **kwargs)
+        self.description = "Calculate the difference of the two hexadecimal numbers.\n" \
+                           "You'll have ten seconds for every operation.\n" + \
+                           self.standard_description
 
 
 class Hex2Dec(Game):
@@ -304,11 +302,10 @@ class Hex2Dec(Game):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Hex2dec'
-        self.description = "Convert the hexadecimal numbers to decimal notation.\n" \
-                           "Novice: numbers up to F; intermediate: numbers up to 7F; " \
-                           "expert: numbers up to FF.\n" \
-                           "You'll have six seconds for every number.\n"
         super().__init__(self.name_id, self.name, *args, **kwargs)
+        self.description = "Convert the hexadecimal numbers to decimal notation.\n" \
+                           "You'll have six seconds for every number.\n" + \
+                           self.standard_description
 
     def run(self, opts: dict) -> bool:
         a = random.randint(1, opts['max_value'])
@@ -330,11 +327,10 @@ class Dec2Hex(Game):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Dec2hex'
-        self.description = "Convert the decimal numbers to hexadecimal notation.\n" \
-                           "Novice: numbers up to F; intermediate: numbers up to 7F; " \
-                           "expert: numbers up to FF.\n" \
-                           "You'll have six seconds for every number.\n"
         super().__init__(self.name_id, self.name, *args, **kwargs)
+        self.description = "Convert the decimal numbers to hexadecimal notation.\n" \
+                           "You'll have six seconds for every number.\n" + \
+                           self.standard_description
 
     def run(self, opts: dict) -> bool:
         a = random.randint(1, opts['max_value'])
@@ -355,11 +351,11 @@ class RecognizeWord(Game):
     def __init__(self, name_id: str, *args, **kwargs) -> None:
         self.name_id = name_id
         self.name = 'Recognize code points'
+        super().__init__(self.name_id, self.name, *args, **kwargs)
         self.description = "Decode words written as a sequence of hexadecimal numbers " \
                            "to their correspondent sequence of unicode characters.\n" \
                            "Novice: you'll have twenty seconds for every word; " \
                            "intermediate: fifteen seconds; "
-        super().__init__(self.name_id, self.name, *args, **kwargs)
 
     def setup(self) -> dict:
         try:
