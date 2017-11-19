@@ -263,7 +263,7 @@ class HexArithm(Game):
         else:
             # otherwise strip possible '0x' or starting zeroes while
             # preserving sign
-            answer = re.sub(r'^(-)?(?:0x)?0*', r'\1', answer)
+            answer = re.sub(r'^(-?)(?:0x)?0*', r'\1', answer)
         if answer == hexresult:
             return True
         else:
