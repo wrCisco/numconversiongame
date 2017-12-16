@@ -379,7 +379,7 @@ class RecognizeWord(Game):
                          'fenomeno', 'banana', 'computer', 'bicchiere', 'aspirina',
                          'penna', 'canapa', 'scottex', 'mouse', 'cotone', 'finestra',
                          'tavolo', 'rock'}
-        seconds = (20, 15, 10)
+        seconds = (20, 15, 10, 5)
         time_for_answer = seconds[self.set_difficulty() - 1]
         options = {'words_set': words_set,
                    'time_for_answer': time_for_answer}
