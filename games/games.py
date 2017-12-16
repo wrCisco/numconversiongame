@@ -232,7 +232,7 @@ class HexArithm(Game):
                   'operator': operator.sub},
                  {'glyph': '\u00d7',
                   'operator': operator.mul,
-                  'difficulty_coefficient': 0x10}
+                  'difficulty_coefficient': 0x08}
             )
 
     def setup(self):
