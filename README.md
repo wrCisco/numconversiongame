@@ -1,7 +1,7 @@
 # numconversiongame
 Simple Q&amp;A games, mostly hexadecimal arithmetics
 
-Numconversiongame is a very simple platform to sharpen skills with Q&R console based games.
+Numconversiongame is a very simple platform to sharpen skills with Q&A console based games.
 I wrote it mostly to train myself in rapid computations with hexadecimal numbers.
 
 The platform is extensible by subclassing the Game class in games.py and adding an instance
