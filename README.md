@@ -1,5 +1,5 @@
 # numconversiongame
-Simple Q&amp;R games, mostly hexadecimal arithmetics
+Simple Q&amp;A games, mostly hexadecimal arithmetics
 
 Numconversiongame is a very simple platform to sharpen skills with Q&R console based games.
 I wrote it mostly to train myself in rapid computations with hexadecimal numbers.
