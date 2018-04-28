@@ -145,3 +145,7 @@ ENV/
 highscores.txt
 
 numconv_old.py
+
+# vim backup files
+*~
+
